@@ -1,0 +1,19 @@
+#version 330 core
+
+uniform sampler2D layer0;
+uniform sampler2D layer1;
+
+uniform float offset0 = 1;
+uniform float offset1 = 1;
+
+in vec2 texCoords;
+
+out vec4 color;
+
+void main() {
+    vec4 color0 = texture(layer0, texCoords + vec2(0, offset0));
+    vec4 color1 = texture(layer1, texCoords + vec2(0, offset1));
+	color = mix(color0, color1, 1 - color0.a);
+	if (color.a == 0)
+	    discard;
+}
