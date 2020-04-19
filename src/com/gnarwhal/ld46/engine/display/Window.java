@@ -122,7 +122,7 @@ public class Window {
 		
 		glEnable(GL_MULTISAMPLE);
 
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+		//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 		
 		int[] awidth = new int[1], aheight = new int[1];
 		glfwGetWindowSize(window, awidth, aheight);

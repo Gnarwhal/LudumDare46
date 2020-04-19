@@ -5,7 +5,7 @@ import static org.lwjgl.opengl.GL20.glUniform4f;
 
 public class Shader2c extends Shader {
 
-	int colorLoc;
+	private int colorLoc;
 	
 	protected Shader2c(String vert, String frag) {
 		super(vert, frag);

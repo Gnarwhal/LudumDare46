@@ -32,7 +32,7 @@ public class Texture {
 			height = bi.getHeight();
 			int[] pixels = bi.getRGB(0, 0, width, height, null, 0, width);
 			ByteBuffer buffer = BufferUtils.createByteBuffer(width * height * 4);
-			
+
 			for (int i = 0; i < height; i++) {
 				for (int j = 0; j < width; j++) {
 					int pixel = pixels[i * width + j];

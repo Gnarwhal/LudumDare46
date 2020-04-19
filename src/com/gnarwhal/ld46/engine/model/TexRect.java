@@ -34,7 +34,7 @@ public class TexRect extends Rect {
 	}
 	
 	public void setCenter(float x, float y) {
-		position.x = x - width / 2;
+		position.x = x - width  / 2;
 		position.y = y - height / 2;
 	}
 	

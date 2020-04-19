@@ -1,5 +1,6 @@
 #version 330 core
 
+uniform vec4 subtexture = vec4(0, 0, 1, 1);
 uniform mat4 mvp;
 
 layout (location = 0) in vec3 vertices;
@@ -8,6 +9,6 @@ layout (location = 1) in vec2 itexCoords;
 out vec2 texCoords;
 
 void main() {
-	texCoords = itexCoords;
+	texCoords = itexCoords * subtexture.zw + subtexture.xy;
 	gl_Position = mvp * vec4(vertices, 1);
 }
