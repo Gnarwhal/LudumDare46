@@ -52,8 +52,8 @@ public class Main {
 		al = new ALManagement();
 
 		final int WIN_WIDTH = 1920, WIN_HEIGHT = 1080;
-		//window = new Window("Ludum Dare 46", true);
-		window = new Window(WIN_WIDTH * 3/4, WIN_HEIGHT * 3/4, "Ludum Dare 46", true, true, true);
+		window = new Window("Ludum Dare 46", true);
+		//window = new Window(WIN_WIDTH * 3/4, WIN_HEIGHT * 3/4, "Ludum Dare 46", true, true, true);
 		camera = new Camera(WIN_WIDTH, WIN_HEIGHT);
 		Shader.init();
 
