@@ -9,6 +9,7 @@ public class GamePanel {
 	private Camera camera;
 
 	private Player player;
+	private Egg egg;
 
 	private Platform[] platforms;
 
@@ -17,20 +18,25 @@ public class GamePanel {
 		this.camera = camera;
 
 		player = new Player(window, camera);
+		egg = new Egg(camera);
 
 		platforms = new Platform[] {
-			new Platform(camera, 800, 800, 320)
+			new Platform(camera, (camera.getWidth()     / 4 - Platform.SEGMENT_WIDTH * 4 / 2), camera.getHeight() * 2 / 5 - Platform.HEIGHT / 2, 2),
+			new Platform(camera, (camera.getWidth() * 3 / 4 - Platform.SEGMENT_WIDTH * 4 / 2), camera.getHeight() * 2 / 5 - Platform.HEIGHT / 2, 2),
+			new Platform(camera, (camera.getWidth()     / 2 - Platform.SEGMENT_WIDTH * 5 / 2), camera.getHeight() * 3 / 4 - Platform.HEIGHT / 2, 3)
 		};
 	}
 	
 	public void update() {
-		player.update(platforms);
+		egg.update(platforms);
+		player.update(platforms, egg);
 	}
 	
 	public void render() {
 		for (int i = 0; i < platforms.length; ++i) {
 			platforms[i].render();
 		}
+		egg.render();
 		player.render();
 	}
 }

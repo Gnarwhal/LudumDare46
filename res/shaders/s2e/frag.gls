@@ -11,7 +11,7 @@ out vec4 color;
 void main() {
     vec4 sample = texture(sampler, texCoords);
     float x = sample.r + time;
-    color = vec4(iColor * mod(floor(x), 2) * (-x + 2), sample.a);
+    color = vec4(iColor, mod(floor(x), 2) * (-x + 2) * sample.a);
 	if (color.a == 0) {
 	    discard;
 	}

@@ -10,13 +10,22 @@ public class Main {
 
 	public static int fps;
 	public static double dtime;
-	
+	public static double adtime;
+
+	private static double freezeDuration;
+	private static double freezeTime;
+
 	private ALManagement al;
 	
 	private Window window;
 	private Camera camera;
 	
 	private GamePanel panel;
+
+	public static void freeze(float duration) {
+		freezeDuration = duration;
+		freezeTime     = 0;
+	}
 
 	public void start() {
 		init();
@@ -27,7 +36,15 @@ public class Main {
 		while(!window.shouldClose()) {
 			curTime = System.nanoTime();
 			if (curTime - pastTime > nspf) {
-				dtime = nspf / 1000000000d;
+				adtime = nspf / 1000000000d;
+				if (freezeDuration > freezeTime + adtime) {
+					dtime = 0;
+				} else if (freezeDuration > freezeTime) {
+					dtime = adtime - (freezeDuration - freezeTime);
+				} else {
+					dtime = adtime;
+				}
+				freezeTime += adtime;
 				update();
 				render();
 				pastTime += nspf;
