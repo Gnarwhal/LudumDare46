@@ -5,6 +5,7 @@ import com.gnarwhal.ld46.engine.display.Camera;
 import com.gnarwhal.ld46.engine.display.Window;
 import com.gnarwhal.ld46.engine.model.ColRect;
 import com.gnarwhal.ld46.engine.model.Rect;
+import com.gnarwhal.ld46.engine.shaders.Shader;
 import com.gnarwhal.ld46.engine.shaders.Shader2e;
 import com.gnarwhal.ld46.engine.shaders.Shader2t;
 import com.gnarwhal.ld46.engine.texture.Texture;
@@ -12,9 +13,8 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-import java.util.Vector;
-
 import static com.gnarwhal.ld46.engine.display.Window.BUTTON_PRESSED;
+import static com.gnarwhal.ld46.game.Egg.ALIVE;
 import static com.gnarwhal.ld46.game.Main.adtime;
 import static com.gnarwhal.ld46.game.Main.dtime;
 import static org.lwjgl.glfw.GLFW.*;
@@ -38,14 +38,14 @@ public class Player extends Rect {
 	};
 
 	private static final float
-		UP_ANGLE_DEVIATION   = (float) Math.PI / 12.0f,
-		SIDE_ANGLE_DEVIATION = (float) Math.PI / 3.0f,
-		DOWN_ANGLE_DEVIATION = (float) Math.PI / 12.0f;
+		UP_ANGLE_DEVIATION   = (float) Math.PI * 1.0f / 12.0f,
+		SIDE_ANGLE_DEVIATION = (float) Math.PI * 1.0f / 12.0f,
+		DOWN_ANGLE_DEVIATION = (float) Math.PI * 1.0f / 12.0f;
 
 	private static final float
-			UP_ANGLE_RANGE   = (float) Math.PI * 2.0f / 3.0f,
-			SIDE_ANGLE_RANGE = (float) Math.PI * 3.0f / 4.0f,
-			DOWN_ANGLE_RANGE = (float) Math.PI * 2.0f / 3.0f;
+		UP_ANGLE_RANGE   = 2 * (float) Math.PI * 1.0f / 4.0f,
+		SIDE_ANGLE_RANGE = 2 * (float) Math.PI * 1.0f / 4.0f,
+		DOWN_ANGLE_RANGE = 2 * (float) Math.PI * 1.0f / 4.0f;
 
 	// sour spot power, sweet spot power
 	private static final Vector2f
@@ -65,6 +65,7 @@ public class Player extends Rect {
 
 	private static Sound sweet;
 	private static Sound sour;
+	private static Sound kill;
 
 	private Vector4f scaledCollisionOffsets;
 
@@ -121,7 +122,7 @@ public class Player extends Rect {
 		offset = new Vector3f();
 		idleTime = 0;
 
-		shader = new Shader2t();
+		shader = Shader.SHADER2T;
 		effectShader = new Shader2e();
 
 		velocity = new Vector3f();
@@ -138,6 +139,7 @@ public class Player extends Rect {
 		if (sour == null) {
 			sweet = new Sound("res/audio/sweet.wav");
 			sour  = new Sound("res/audio/sour.wav");
+			kill  = new Sound("res/audio/kill.wav");
 		}
 	}
 
@@ -178,9 +180,9 @@ public class Player extends Rect {
 			}
 		}
 		final float ATTACK_BEGIN  = 0.05f;
-		final float ATTACK_ACTIVE = 0.25f;
-		final float ATTACK_HOLD   = 0.3f;
-		final float ATTACK_END    = 0.4f;
+		final float ATTACK_ACTIVE = 0.15f;
+		final float ATTACK_HOLD   = 0.2f;
+		final float ATTACK_END    = 0.3f;
 		if (state != STATE_REST) {
 			if (attackTimer < ATTACK_BEGIN) {
 				sprite.set(0, 0.2f * state);
@@ -445,13 +447,18 @@ public class Player extends Rect {
 				float radius = egg.getRadius(theta);
 				float distance = displacement.length();
 
+				final float SWEET_SPOT_DIFFERENCE = 2 * (float) Math.PI / 12;
 
 				float launchVelocity = 0;
 				float blah = distance - HITBOX_RADIUS;
-				if (-SWEET_SPOT_RADIUS < blah && blah < SWEET_SPOT_RADIUS) {
+				Sound hitsound = sour;
+				int damage = 1;
+				if (-SWEET_SPOT_RADIUS < blah && blah < SWEET_SPOT_RADIUS && difference < SWEET_SPOT_DIFFERENCE) {
 					hit = true;
 					launchVelocity = attackPower.y;
-					sweet.play(false);
+
+					hitsound = sweet;
+					damage   = 3;
 
 					final float SWEET_SPOT_FREEZE_DURATION = 0.35f;
 					Main.freeze(SWEET_SPOT_FREEZE_DURATION);
@@ -459,12 +466,16 @@ public class Player extends Rect {
 				} else if (-radius < blah && blah < radius) {
 					hit = true;
 					launchVelocity = attackPower.x;
-					sour.play(false);
 				}
 				if (launchVelocity != 0) {
 					//rect.setColor(0, 1, 0);
-					float launchAngle = (theta - attackAngle) / (float) Math.PI * 3.0f * angleDeviation + attackAngle;
-					egg.launch(new Vector3f(launchVelocity * (float) Math.cos(launchAngle), launchVelocity * (float) Math.sin(launchAngle), 0));
+					float launchAngle = difference / (float) Math.PI * 3.0f * angleDeviation + attackAngle;
+					egg.launch(new Vector3f(launchVelocity * (float) Math.cos(launchAngle), launchVelocity * (float) Math.sin(launchAngle), 0), damage);
+					if (egg.state() != ALIVE) {
+						kill.play(false);
+					} else {
+						hitsound.play(false);
+					}
 				}
 			}
 		}

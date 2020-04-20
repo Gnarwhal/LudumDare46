@@ -2,6 +2,7 @@ package com.gnarwhal.ld46.game;
 
 import com.gnarwhal.ld46.engine.display.Camera;
 import com.gnarwhal.ld46.engine.display.Window;
+import com.gnarwhal.ld46.engine.model.TexRect;
 
 public class GamePanel {
 
@@ -12,6 +13,9 @@ public class GamePanel {
 	private Egg egg;
 
 	private Platform[] platforms;
+
+	private TexRect killsText;
+	private KillTracker killCount;
 
 	public GamePanel(Window window, Camera camera) {
 		this.window = window;
@@ -25,10 +29,17 @@ public class GamePanel {
 			new Platform(camera, (camera.getWidth() * 3 / 4 - Platform.SEGMENT_WIDTH * 4 / 2), camera.getHeight() * 2 / 5 - Platform.HEIGHT / 2, 2),
 			new Platform(camera, (camera.getWidth()     / 2 - Platform.SEGMENT_WIDTH * 5 / 2), camera.getHeight() * 3 / 4 - Platform.HEIGHT / 2, 3)
 		};
+
+		killsText = new TexRect(camera, "res/img/kills.png", 0, 0, 0, 64 * 6, 64, 0, false);
+		killCount = new KillTracker(camera, 64 * 6, 0);
 	}
 	
 	public void update() {
 		egg.update(platforms);
+		if (egg.state() == Egg.DEAD) {
+			egg.reset();
+			killCount.increment();
+		}
 		player.update(platforms, egg);
 	}
 	
@@ -38,5 +49,7 @@ public class GamePanel {
 		}
 		egg.render();
 		player.render();
+		killsText.render();
+		killCount.render();
 	}
 }

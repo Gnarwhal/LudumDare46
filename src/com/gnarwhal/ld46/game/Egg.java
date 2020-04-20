@@ -1,5 +1,6 @@
 package com.gnarwhal.ld46.game;
 
+import com.gnarwhal.ld46.engine.audio.Sound;
 import com.gnarwhal.ld46.engine.display.Camera;
 import com.gnarwhal.ld46.engine.model.Rect;
 import com.gnarwhal.ld46.engine.shaders.Shader;
@@ -14,6 +15,13 @@ public class Egg extends Rect {
 
 	private static final float WIDTH  = 96;
 	private static final float HEIGHT = 128;
+
+	public static final int
+		ALIVE = 0x00,
+		DYING = 0x01,
+		DEAD  = 0x02;
+
+	private static final float FULL_HEALTH = 20;
 
 	private static Texture texture;
 	private static Shader2t shader;
@@ -30,10 +38,18 @@ public class Egg extends Rect {
 	private float vertBounceDecay;
 	private float bounceChangeTime;
 
+	private float health;
+	private int state;
+
 	public Egg(Camera camera) {
 		super(camera, (camera.getWidth() - WIDTH) / 2, (camera.getHeight() - HEIGHT) / 2, -0.2f, WIDTH, HEIGHT, 0, false);
+		reset();
+	}
 
-		velocity = new Vector3f(600, -600, 0);
+	public void reset() {
+		set((camera.getWidth() - WIDTH) / 2, (camera.getHeight() - HEIGHT) / 2, WIDTH, HEIGHT);
+
+		velocity = new Vector3f(0, -840, 0);
 
 		if (texture == null) {
 			texture = new Texture("res/img/eggs.png");
@@ -44,6 +60,10 @@ public class Egg extends Rect {
 		b = (WIDTH - HEIGHT) / 4;
 
 		vertBounceDecay = VERT_BOUNCE_DECAY;
+
+		health = FULL_HEALTH;
+
+		state = ALIVE;
 	}
 
 	public void update(Platform[] platforms) {
@@ -65,9 +85,11 @@ public class Egg extends Rect {
 			friction = -GROUNDED_DECELERATION * (velocity.x / Math.abs(velocity.x));
 		}
 
-		float absVelocityY = Math.abs(velocity.y());
-		if (absVelocityY > TERMINAL_VELOCITY) {
-			velocity.y = (velocity.y / absVelocityY) * TERMINAL_VELOCITY;
+		if (state == ALIVE) {
+			float absVelocityY = Math.abs(velocity.y());
+			if (absVelocityY > TERMINAL_VELOCITY) {
+				velocity.y = (velocity.y / absVelocityY) * TERMINAL_VELOCITY;
+			}
 		}
 
 		velocity.add(acceleration.mul((float) dtime, new Vector3f()));
@@ -85,7 +107,7 @@ public class Egg extends Rect {
 		Vector3f translation = velocity.mul((float) dtime, new Vector3f());
 		Vector3f translationCopy = new Vector3f(translation);
 
-		if (translation.y > 0) {
+		if (translation.y > 0 && state == ALIVE) {
 			Vector3f bottomLeft  = new Vector3f(position).add(0, height, 0);
 			Vector3f bottomRight = new Vector3f(position).add(width, height, 0);
 			for (int i = 0; i < platforms.length; ++i) {
@@ -122,24 +144,30 @@ public class Egg extends Rect {
 
 		position.add(translation);
 
-		// Check y bounds
-		if (position.y + height > camera.getHeight()) {
-			position.y = camera.getHeight() - height;
-			velocity.y *= -vertBounceDecay;
-			grounded = true;
-		} else {
-			if (position.y < 0) {
-				position.y = 0;
-				velocity.y *= -vertBounceDecay;
+		if (state == DYING) {
+			if (position.x + width < 0 || position.x > camera.getWidth() || position.y + height < 0 || position.y > camera.getHeight()) {
+				state = DEAD;
 			}
-		}
-		// Check X bounds
-		if (position.x < 0) {
-			position.x = 0;
-			velocity.x *= -HORZ_BOUNCE_DECAY;
-		} else if (position.x + width > camera.getWidth()) {
-			position.x = camera.getWidth() - width;
-			velocity.x *= -HORZ_BOUNCE_DECAY;
+		} else {
+			// Check y bounds
+			if (position.y + height > camera.getHeight()) {
+				position.y = camera.getHeight() - height;
+				velocity.y *= -vertBounceDecay;
+				grounded = true;
+			} else {
+				if (position.y < 0) {
+					position.y = 0;
+					velocity.y *= -vertBounceDecay;
+				}
+			}
+			// Check X bounds
+			if (position.x < 0) {
+				position.x = 0;
+				velocity.x *= -HORZ_BOUNCE_DECAY;
+			} else if (position.x + width > camera.getWidth()) {
+				position.x = camera.getWidth() - width;
+				velocity.x *= -HORZ_BOUNCE_DECAY;
+			}
 		}
 
 		// --- E N D   C O L L I S I O N --- //
@@ -150,15 +178,27 @@ public class Egg extends Rect {
 	public void render() {
 		texture.bind();
 		shader.enable();
-		shader.setSubtexture(new Vector2f(0, 0), SUBTEXTURE_DIMS);
+		int sprite = 4 - Math.round(health / FULL_HEALTH * 4);
+		shader.setSubtexture(new Vector2f(0.2f * sprite, 0), SUBTEXTURE_DIMS);
 		shader.setMVP(camera.getMatrix().translate(position).scale(WIDTH * scale, HEIGHT * scale, 1));
 		vao.render();
 	}
 
-	public void launch(Vector3f velocity) {
-		this.velocity.set(velocity);
-		vertBounceDecay = HIT_BOUNCE_DECAY;
-		bounceChangeTime = 0;
+	public void launch(Vector3f velocity, int damage) {
+		if (health > 0) {
+			this.velocity.set(velocity);
+			vertBounceDecay = HIT_BOUNCE_DECAY;
+			bounceChangeTime = 0;
+			health -= damage;
+			if (health <= 0) {
+				this.velocity.mul(4);
+				state = DYING;
+			}
+		}
+	}
+
+	public int state() {
+		return state;
 	}
 
 	public Vector3f getOrigin() {
